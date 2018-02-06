@@ -2,13 +2,14 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
 
 	"github.com/gorilla/handlers"
 	"github.com/upload-image-service/data"
+	"github.com/upload-image-service/manager"
+	"github.com/upload-image-service/util"
 	filetype "gopkg.in/h2non/filetype.v1"
 )
 
@@ -51,7 +52,7 @@ func handlerUpload(w http.ResponseWriter, r *http.Request) {
 	if r.Method == methodPost {
 		validateValue(w, r)
 	} else {
-		errorMessage(w, http.StatusMethodNotAllowed, messageMethodNotAllowed)
+		util.ErrorMessage(w, http.StatusMethodNotAllowed, messageMethodNotAllowed)
 	}
 }
 
@@ -60,16 +61,15 @@ func validateValue(w http.ResponseWriter, r *http.Request) {
 	apiKey := r.FormValue(keyAPIKey)
 	region := r.FormValue(keyRegion)
 	if len(bucket) == 0 {
-		errorMessage(w, http.StatusBadRequest, messageBucketNameInvalid)
+		util.ErrorMessage(w, http.StatusBadRequest, messageBucketNameInvalid)
 	} else if len(apiKey) == 0 {
-		errorMessage(w, http.StatusBadRequest, messageAPIKeyInvalid)
+		util.ErrorMessage(w, http.StatusBadRequest, messageAPIKeyInvalid)
 	} else if len(region) == 0 {
-		errorMessage(w, http.StatusBadRequest, messageRegionInvalid)
+		util.ErrorMessage(w, http.StatusBadRequest, messageRegionInvalid)
 	} else {
-		fmt.Printf("%s\t%s\t%s\n", bucket, apiKey, region)
-		file, _, err := r.FormFile(keyImage)
+		file, headerFile, err := r.FormFile(keyImage)
 		if err != nil {
-			errorMessage(w, http.StatusBadRequest, messageNoSuchFile)
+			util.ErrorMessage(w, http.StatusBadRequest, messageNoSuchFile)
 		} else {
 			defer file.Close()
 			var model data.UploadImage
@@ -77,6 +77,7 @@ func validateValue(w http.ResponseWriter, r *http.Request) {
 			model.Bucket = bucket
 			model.Region = region
 			model.Image = file
+			model.ImageName = headerFile.Filename
 			validateTypeFile(model, w, r)
 		}
 	}
@@ -86,13 +87,13 @@ func validateTypeFile(model data.UploadImage, w http.ResponseWriter, r *http.Req
 	buf := bytes.NewBuffer(nil)
 	_, error := io.Copy(buf, model.Image)
 	if error != nil {
-		errorMessage(w, http.StatusBadRequest, error.Error())
+		util.ErrorMessage(w, http.StatusBadRequest, error.Error())
 	} else if buf == nil {
-		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
+		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	} else if filetype.IsImage(buf.Bytes()) {
-		// TODO : upload file to aws s3
-		w.Write([]byte(fmt.Sprintf("%d bytes are recieved.\n", model.Image)))
+		model.ImageByte = buf.Bytes()
+		manager.UploadImageToS3(model)
 	} else {
-		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
+		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	}
 }
