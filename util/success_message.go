@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-// SuccessMessage is response message error request
+// SuccessMessage is response message success request
 func SuccessMessage(w http.ResponseWriter, obj interface{}) {
 	model, err := json.Marshal(obj)
 	if err != nil {
