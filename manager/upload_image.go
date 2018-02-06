@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	awsAccessKey = os.Getenv("S3_ACCESS_KEY_PRIVATE")
+	awsAccessKey = os.Getenv("S3_ACCESS_KEY")
 	token        = ""
 	pathImage    = "https://s3.amazonaws.com/api-upload-image/"
 )
