@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/gorilla/handlers"
+	"github.com/upload-image-service/utils"
 	filetype "gopkg.in/h2non/filetype.v1"
 )
 
@@ -34,40 +35,6 @@ const (
 	pathUpload = "/upload"
 )
 
-func errorMessage(w http.ResponseWriter, statusCode int, message string) {
-	w.WriteHeader(statusCode)
-	w.Write([]byte(fmt.Sprint(message)))
-}
-
-func validateTypeFile(file multipart.File, w http.ResponseWriter, r *http.Request) {
-	buf := bytes.NewBuffer(nil)
-	_, error := io.Copy(buf, file)
-	if error != nil {
-		errorMessage(w, http.StatusBadRequest, error.Error())
-	} else if buf == nil {
-		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
-	} else if filetype.IsImage(buf.Bytes()) {
-		// TODO : upload file to aws s3
-		w.Write([]byte(fmt.Sprintf("%d bytes are recieved.\n", file)))
-	} else {
-		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
-	}
-}
-
-func handlerUpload(w http.ResponseWriter, r *http.Request) {
-	if r.Method == methodPost {
-		file, _, err := r.FormFile(keyImage)
-		if err != nil {
-			errorMessage(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		defer file.Close()
-		validateTypeFile(file, w, r)
-	} else {
-		errorMessage(w, http.StatusMethodNotAllowed, messageMethodNotAllowed)
-	}
-}
-
 func main() {
 	if httpPort == "" {
 		httpPort = httpPortLocal
@@ -84,6 +51,35 @@ func main() {
 	// if err != nil {
 	// 	log.Fatal(err)
 	// }
+}
+
+func handlerUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method == methodPost {
+		file, _, err := r.FormFile(keyImage)
+		if err != nil {
+			utils.ErrorMessage(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		defer file.Close()
+		validateTypeFile(file, w, r)
+	} else {
+		utils.ErrorMessage(w, http.StatusMethodNotAllowed, messageMethodNotAllowed)
+	}
+}
+
+func validateTypeFile(file multipart.File, w http.ResponseWriter, r *http.Request) {
+	buf := bytes.NewBuffer(nil)
+	_, error := io.Copy(buf, file)
+	if error != nil {
+		utils.ErrorMessage(w, http.StatusBadRequest, error.Error())
+	} else if buf == nil {
+		utils.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
+	} else if filetype.IsImage(buf.Bytes()) {
+		// TODO : upload file to aws s3
+		w.Write([]byte(fmt.Sprintf("%d bytes are recieved.\n", file)))
+	} else {
+		utils.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
+	}
 }
 
 // func addFileToS3(s *session.Session, fileDir string) error {
