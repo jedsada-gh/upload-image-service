@@ -15,7 +15,7 @@ import (
 )
 
 // UploadImageToS3 is upload image file to AWS S3
-func UploadImageToS3(model data.UploadImage) {
+func UploadImageToS3(model data.UploadImage) error {
 	s, err := session.NewSession(&aws.Config{Region: aws.String(model.Region)})
 	if err != nil {
 		log.Fatal(err)
@@ -23,27 +23,26 @@ func UploadImageToS3(model data.UploadImage) {
 
 	err = addFileToS3(s, model)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return err
 }
 
 func addFileToS3(s *session.Session, model data.UploadImage) error {
 	file, err := os.Create(model.ImageName)
 	if err != nil {
-		log.Fatalf("failed creating file: %s", err)
+		return err
 	}
 
 	_, err = file.Write(model.ImageByte)
 
 	defer file.Close()
 	if err != nil {
-		log.Fatalf("failed writing to file: %s", err)
+		return err
 	}
 
 	fileInfo, _ := file.Stat()
 	fileName := fileInfo.Name()
-	var size = fileInfo.Size()
-
 	fileBytes := bytes.NewReader(model.ImageByte)
 	fileType := http.DetectContentType(model.ImageByte)
 
@@ -51,7 +50,7 @@ func addFileToS3(s *session.Session, model data.UploadImage) error {
 		Bucket:        aws.String(model.Bucket),
 		Key:           aws.String(fileName),
 		Body:          fileBytes,
-		ContentLength: aws.Int64(size),
+		ContentLength: aws.Int64(fileInfo.Size()),
 		ContentType:   aws.String(fileType),
 	})
 	if err != nil {

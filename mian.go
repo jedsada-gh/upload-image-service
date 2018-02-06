@@ -92,7 +92,10 @@ func validateTypeFile(model data.UploadImage, w http.ResponseWriter, r *http.Req
 		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	} else if filetype.IsImage(buf.Bytes()) {
 		model.ImageByte = buf.Bytes()
-		manager.UploadImageToS3(model)
+		err := manager.UploadImageToS3(model)
+		if err != nil {
+			util.ErrorMessage(w, http.StatusBadRequest, err.Error())
+		}
 	} else {
 		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	}
