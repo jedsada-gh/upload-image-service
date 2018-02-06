@@ -14,9 +14,8 @@ import (
 )
 
 var (
-	httpPort      = os.Getenv("PORT")
-	httpPortLocal = "8080"
-	listenIP      = "localhost"
+	httpPort = os.Getenv("PORT")
+	listenIP = "localhost"
 )
 
 var (
@@ -41,9 +40,6 @@ const (
 )
 
 func main() {
-	if httpPort == "" {
-		httpPort = httpPortLocal
-	}
 	http.HandleFunc(pathUpload, handlerUpload)
 	http.ListenAndServe(":"+httpPort, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 }
@@ -92,11 +88,19 @@ func validateTypeFile(model data.UploadImage, w http.ResponseWriter, r *http.Req
 		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	} else if filetype.IsImage(buf.Bytes()) {
 		model.ImageByte = buf.Bytes()
-		err := manager.UploadImageToS3(model)
+		err, pathUpload := manager.UploadImageToS3(model)
 		if err != nil {
 			util.ErrorMessage(w, http.StatusBadRequest, err.Error())
+		} else {
+			util.SuccessMessage(w, getSuccessModel(pathUpload))
 		}
 	} else {
 		util.ErrorMessage(w, http.StatusBadRequest, messageFileNotSupported)
 	}
+}
+
+func getSuccessModel(pathUpload string) data.Success {
+	var modelSuccess data.Success
+	modelSuccess.ImageURL = pathUpload
+	return modelSuccess
 }

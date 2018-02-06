@@ -8,24 +8,37 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/upload-image-service/data"
 )
 
+var (
+	awsAccessKey = os.Getenv("S3_ACCESS_KEY_PRIVATE")
+	token        = ""
+	pathImage    = "https://s3.amazonaws.com/api-upload-image/"
+)
+
 // UploadImageToS3 is upload image file to AWS S3
-func UploadImageToS3(model data.UploadImage) error {
-	s, err := session.NewSession(&aws.Config{Region: aws.String(model.Region)})
+func UploadImageToS3(model data.UploadImage) (error, string) {
+	fmt.Println(awsAccessKey)
+	creds := credentials.NewStaticCredentials(awsAccessKey, model.APIKey, token)
+	_, err := creds.Get()
+	if err != nil {
+		return err, ""
+	}
+	cfg := aws.NewConfig().WithRegion(model.Region).WithCredentials(creds)
+	s, err := session.NewSession(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	err = addFileToS3(s, model)
 	if err != nil {
-		return err
+		return err, ""
 	}
-	return err
+	return nil, (pathImage + model.ImageName)
 }
 
 func addFileToS3(s *session.Session, model data.UploadImage) error {
@@ -46,7 +59,7 @@ func addFileToS3(s *session.Session, model data.UploadImage) error {
 	fileBytes := bytes.NewReader(model.ImageByte)
 	fileType := http.DetectContentType(model.ImageByte)
 
-	res, err := s3.New(s).PutObject(&s3.PutObjectInput{
+	_, err = s3.New(s).PutObject(&s3.PutObjectInput{
 		Bucket:        aws.String(model.Bucket),
 		Key:           aws.String(fileName),
 		Body:          fileBytes,
@@ -56,7 +69,6 @@ func addFileToS3(s *session.Session, model data.UploadImage) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("response %s", awsutil.StringValue(res))
 	err = os.Remove("./" + fileName)
 	if err != nil {
 		return err

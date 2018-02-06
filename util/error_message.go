@@ -14,11 +14,11 @@ func ErrorMessage(w http.ResponseWriter, statusCode int, message string) {
 	var errorDetailModel data.ErrorDetail
 	errorDetailModel.Message = message
 	errorModel.ErrorDetail = errorDetailModel
-	movie, err := json.Marshal(errorModel)
+	error, err := json.Marshal(errorModel)
 	if err != nil {
 		fmt.Println(err)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	w.Write(movie)
+	w.Write(error)
 }
