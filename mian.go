@@ -13,15 +13,25 @@ import (
 )
 
 var (
-	httpPort = os.Getenv("PORT")
-	listenIP = "localhost"
-	s3Region = ""
-	s3Bucket = ""
+	httpPort      = os.Getenv("PORT")
+	httpPortLocal = "8080"
+	listenIP      = "localhost"
+	s3Region      = ""
+	s3Bucket      = ""
 )
 
 var (
 	messageMethodNotAllowed = "Method Not Allowed"
 	messageFileNotSupported = "File Not Support bacause type Image only"
+)
+
+const (
+	methodPost = "POST"
+	keyImage   = "file"
+)
+
+const (
+	pathUpload = "/upload"
 )
 
 func errorMessage(w http.ResponseWriter, statusCode int, message string) {
@@ -36,10 +46,8 @@ func validateTypeFile(file multipart.File, w http.ResponseWriter, r *http.Reques
 		errorMessage(w, http.StatusBadRequest, error.Error())
 	} else if buf == nil {
 		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
-	}
-	if filetype.IsImage(buf.Bytes()) {
+	} else if filetype.IsImage(buf.Bytes()) {
 		// TODO : upload file to aws s3
-		fmt.Println("File is an image")
 		w.Write([]byte(fmt.Sprintf("%d bytes are recieved.\n", file)))
 	} else {
 		errorMessage(w, http.StatusBadRequest, messageFileNotSupported)
@@ -47,8 +55,8 @@ func validateTypeFile(file multipart.File, w http.ResponseWriter, r *http.Reques
 }
 
 func handlerUpload(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "POST" {
-		file, _, err := r.FormFile("file")
+	if r.Method == methodPost {
+		file, _, err := r.FormFile(keyImage)
 		if err != nil {
 			errorMessage(w, http.StatusBadRequest, err.Error())
 			return
@@ -62,9 +70,9 @@ func handlerUpload(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	if httpPort == "" {
-		httpPort = "8080"
+		httpPort = httpPortLocal
 	}
-	http.HandleFunc("/upload", handlerUpload)
+	http.HandleFunc(pathUpload, handlerUpload)
 	http.ListenAndServe(":"+httpPort, handlers.LoggingHandler(os.Stdout, http.DefaultServeMux))
 
 	// s, err := session.NewSession(&aws.Config{Region: aws.String(s3Region)})
