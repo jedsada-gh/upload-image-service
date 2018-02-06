@@ -2,8 +2,6 @@ package manager
 
 import (
 	"bytes"
-	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -20,9 +18,8 @@ var (
 	pathImage    = "https://s3.amazonaws.com/api-upload-image/"
 )
 
-// UploadImageToS3 is upload image file to AWS S3
+// UploadImageToS3 is upload to AWS S3
 func UploadImageToS3(model data.UploadImage) (error, string) {
-	fmt.Println(awsAccessKey)
 	creds := credentials.NewStaticCredentials(awsAccessKey, model.APIKey, token)
 	_, err := creds.Get()
 	if err != nil {
@@ -31,7 +28,7 @@ func UploadImageToS3(model data.UploadImage) (error, string) {
 	cfg := aws.NewConfig().WithRegion(model.Region).WithCredentials(creds)
 	s, err := session.NewSession(cfg)
 	if err != nil {
-		log.Fatal(err)
+		return err, ""
 	}
 
 	err = addFileToS3(s, model)

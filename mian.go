@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 
@@ -16,6 +17,9 @@ import (
 var (
 	httpPort = os.Getenv("PORT")
 	listenIP = "localhost"
+	bucket   string
+	apiKey   string
+	region   string
 )
 
 var (
@@ -53,9 +57,9 @@ func handlerUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 func validateValue(w http.ResponseWriter, r *http.Request) {
-	bucket := r.FormValue(keyBucket)
-	apiKey := r.FormValue(keyAPIKey)
-	region := r.FormValue(keyRegion)
+	bucket = r.FormValue(keyBucket)
+	apiKey = r.FormValue(keyAPIKey)
+	region = r.FormValue(keyRegion)
 	if len(bucket) == 0 {
 		util.ErrorMessage(w, http.StatusBadRequest, messageBucketNameInvalid)
 	} else if len(apiKey) == 0 {
@@ -68,13 +72,7 @@ func validateValue(w http.ResponseWriter, r *http.Request) {
 			util.ErrorMessage(w, http.StatusBadRequest, messageNoSuchFile)
 		} else {
 			defer file.Close()
-			var model data.UploadImage
-			model.APIKey = apiKey
-			model.Bucket = bucket
-			model.Region = region
-			model.Image = file
-			model.ImageName = headerFile.Filename
-			validateTypeFile(model, w, r)
+			validateTypeFile(getImageUploadModel(headerFile.Filename, file), w, r)
 		}
 	}
 }
@@ -103,4 +101,14 @@ func getSuccessModel(pathUpload string) data.Success {
 	var modelSuccess data.Success
 	modelSuccess.ImageURL = pathUpload
 	return modelSuccess
+}
+
+func getImageUploadModel(fileName string, file multipart.File) data.UploadImage {
+	var model data.UploadImage
+	model.APIKey = apiKey
+	model.Bucket = bucket
+	model.Region = region
+	model.Image = file
+	model.ImageName = fileName
+	return model
 }
