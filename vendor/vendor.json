@@ -1,8 +1,7 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [
-		{
+	"package": [{
 			"checksumSHA1": "NQu/L+9CIJLpgrZt3UMlbma9Pk0=",
 			"path": "github.com/aws/aws-sdk-go/aws",
 			"revision": "f36920a0f7a246abe598d73b37b245199aabd3ad",
@@ -191,5 +190,9 @@
 			"revisionTime": "2017-12-12T22:16:18Z"
 		}
 	],
+	"heroku": {
+		"install": ["./..."],
+		"goVersion": "go1.9.3"
+	},
 	"rootPath": "github.com/upload-image-service"
 }
