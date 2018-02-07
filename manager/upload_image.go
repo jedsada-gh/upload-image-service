@@ -15,7 +15,7 @@ import (
 var (
 	awsAccessKey = os.Getenv("S3_ACCESS_KEY")
 	token        = ""
-	pathImage    = "https://s3.amazonaws.com/api-upload-image/"
+	pathImage    = "https://s3.amazonaws.com/"
 )
 
 // UploadImageToS3 is upload to AWS S3
@@ -35,7 +35,7 @@ func UploadImageToS3(model data.UploadImage) (error, string) {
 	if err != nil {
 		return err, ""
 	}
-	return nil, (pathImage + model.ImageName)
+	return nil, (pathImage + model.Bucket + "/" + model.ImageName)
 }
 
 func addFileToS3(s *session.Session, model data.UploadImage) error {
