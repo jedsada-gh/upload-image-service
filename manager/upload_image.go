@@ -67,8 +67,5 @@ func addFileToS3(s *session.Session, model data.UploadImage) error {
 		return err
 	}
 	err = os.Remove("./" + fileName)
-	if err != nil {
-		return err
-	}
 	return err
 }
