@@ -15,18 +15,18 @@ import (
 )
 
 var (
-	httpPort = os.Getenv("PORT")
-	listenIP = "localhost"
-	bucket   string
-	apiKey   string
-	region   string
+	httpPort  = os.Getenv("PORT")
+	listenIP  = "localhost"
+	bucket    string
+	accessKey string
+	region    string
 )
 
 var (
 	messageMethodNotAllowed  = "Method Not Allowed"
 	messageFileNotSupported  = "File Not Support bacause type Image only"
 	messageBucketNameInvalid = "Bucket Invalid"
-	messageAPIKeyInvalid     = "API Key Invalid"
+	messageAccessKeyInvalid  = "Access Key Invalid"
 	messageRegionInvalid     = "Region Invalid"
 	messageNoSuchFile        = "No such file"
 )
@@ -36,7 +36,7 @@ const (
 	keyImage   = "file"
 	keyBucket  = "bucket"
 	keyRegion  = "region"
-	keyAPIKey  = "api_key"
+	keyAccess  = "access_key"
 )
 
 const (
@@ -58,12 +58,12 @@ func handlerUpload(w http.ResponseWriter, r *http.Request) {
 
 func validateValue(w http.ResponseWriter, r *http.Request) {
 	bucket = r.FormValue(keyBucket)
-	apiKey = r.FormValue(keyAPIKey)
+	accessKey = r.FormValue(keyAccess)
 	region = r.FormValue(keyRegion)
 	if len(bucket) == 0 {
 		util.ErrorMessage(w, http.StatusBadRequest, messageBucketNameInvalid)
-	} else if len(apiKey) == 0 {
-		util.ErrorMessage(w, http.StatusBadRequest, messageAPIKeyInvalid)
+	} else if len(accessKey) == 0 {
+		util.ErrorMessage(w, http.StatusBadRequest, messageAccessKeyInvalid)
 	} else if len(region) == 0 {
 		util.ErrorMessage(w, http.StatusBadRequest, messageRegionInvalid)
 	} else {
@@ -105,7 +105,7 @@ func getSuccessModel(pathUpload string) data.Success {
 
 func getImageUploadModel(fileName string, file multipart.File) data.UploadImage {
 	var model data.UploadImage
-	model.APIKey = apiKey
+	model.AccessKey = accessKey
 	model.Bucket = bucket
 	model.Region = region
 	model.Image = file

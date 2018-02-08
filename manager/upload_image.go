@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	awsAccessKey = os.Getenv("S3_ACCESS_KEY")
-	token        = ""
-	pathImage    = "https://s3.amazonaws.com/"
+	awsScretKey = os.Getenv("S3_SECRET_ACCESS_KEY")
+	token       = ""
+	pathImage   = "https://s3.amazonaws.com/"
 )
 
 // UploadImageToS3 is upload to AWS S3
 func UploadImageToS3(model data.UploadImage) (error, string) {
-	creds := credentials.NewStaticCredentials(awsAccessKey, model.APIKey, token)
+	creds := credentials.NewStaticCredentials(model.AccessKey, awsScretKey, token)
 	_, err := creds.Get()
 	if err != nil {
 		return err, ""
@@ -63,9 +63,9 @@ func addFileToS3(s *session.Session, model data.UploadImage) error {
 		ContentLength: aws.Int64(fileInfo.Size()),
 		ContentType:   aws.String(fileType),
 	})
+	os.Remove("./" + fileName)
 	if err != nil {
 		return err
 	}
-	err = os.Remove("./" + fileName)
 	return err
 }

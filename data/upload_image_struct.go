@@ -7,7 +7,7 @@ import (
 // UploadImage is exported because it starts with a capital letter
 type UploadImage struct {
 	Bucket    string
-	APIKey    string
+	AccessKey string
 	Region    string
 	Image     multipart.File
 	ImageByte []byte
